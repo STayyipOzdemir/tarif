@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const getRecipe = async (recipeData) => {
   try {
-    const response = await axios.post('http://192.168.1.167:3000/recipe', recipeData);
+    const response = await axios.post('https://tarif.onrender.com/recipe', recipeData);
     return response.data;
   } catch (error) {
     throw new Error(error.response ? error.response.data : 'Tarif alınırken bir hata oluştu');

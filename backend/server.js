@@ -4,21 +4,24 @@ const axios = require('axios');
 require('dotenv').config();
 
 const app = express();
+
+// Middleware
 app.use(cors());
 app.use(express.json());
 
+// POST /recipe endpoint
 app.post('/recipe', async (req, res) => {
   let { recipeType, servings, prepTime, difficulty } = req.body;
 
   try {
-    // "kek" kelimesini "tatlı" ile değiştirin
+    // "kek" kelimesini "tatlı" ile değiştir
     recipeType = recipeType.replace(/kek/gi, 'tatlı');
 
     // 1. Tarif Verisini OpenAI API'den Al
     const recipeResponse = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
+      process.env.OPENAI_CHAT_URL || 'https://api.openai.com/v1/chat/completions',
       {
-        model: "gpt-3.5-turbo", // Eğer GPT-4 erişiminiz varsa "gpt-4" kullanabilirsiniz
+        model: process.env.OPENAI_MODEL || "gpt-3.5-turbo",
         messages: [
           {
             role: "system",
@@ -68,9 +71,9 @@ app.post('/recipe', async (req, res) => {
 
     // 2. Tarif Başlığını İngilizce'ye Çevir
     const translationResponse = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
+      process.env.OPENAI_CHAT_URL || 'https://api.openai.com/v1/chat/completions',
       {
-        model: "gpt-3.5-turbo",
+        model: process.env.OPENAI_MODEL || "gpt-3.5-turbo",
         messages: [
           {
             role: "system",
@@ -93,15 +96,11 @@ app.post('/recipe', async (req, res) => {
 
     let translatedTitle = translationResponse.data.choices[0].message.content.trim();
 
-    // "cake" kelimesini "dessert" ile değiştirin
-    translatedTitle = translatedTitle.replace(/cake/gi, 'dessert');
-
-    // 3. Tarifin Fotoğrafını OpenAI Image API ile Oluştur (İngilizce istem kullanarak)
+    // 3. Tarifin Fotoğrafını OpenAI Image API ile Oluştur
     const imagePrompt = `${translatedTitle}, a delicious dessert, high-quality food photograph, professional lighting, studio shot`;
-
     try {
       const imageResponse = await axios.post(
-        'https://api.openai.com/v1/images/generations',
+        process.env.OPENAI_IMAGE_URL || 'https://api.openai.com/v1/images/generations',
         {
           prompt: imagePrompt,
           n: 1,
@@ -120,8 +119,7 @@ app.post('/recipe', async (req, res) => {
       // Tarif verisine imageUrl'i ekle
       recipeJson.imageUrl = imageUrl;
     } catch (imageError) {
-      console.error("Görüntü oluşturma sırasında hata oluştu:", imageError.response ? imageError.response.data : imageError.message);
-      // Görüntü oluşturma başarısız olsa bile, tarif verisini yine de döndürebilirsiniz
+      console.error("Görsel oluşturma sırasında hata oluştu:", imageError.response ? imageError.response.data : imageError.message);
       recipeJson.imageUrl = null; // Veya placeholder bir resim URL'si kullanabilirsiniz
     }
 
@@ -132,7 +130,7 @@ app.post('/recipe', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Sunucu ${PORT} portunda çalışıyor`);
+// Dinamik PORT kısmı kaldırıldı
+app.listen(3000, () => {
+  console.log('Sunucu 3000 portunda çalışıyor.');
 });
